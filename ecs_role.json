@@ -1,0 +1,52 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "athena:CancelQueryExecution",
+                "athena:GetCatalogs",
+                "athena:GetExecutionEngine",
+                "athena:GetExecutionEngines",
+                "athena:GetNamespace",
+                "athena:GetNamespaces",
+                "athena:GetQueryExecution",
+                "athena:GetQueryExecutions",
+                "athena:GetQueryResults",
+                "athena:GetTable",
+                "athena:GetTables",
+                "athena:RunQuery"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetBucketLocation",
+                "s3:ListBucket",
+                "s3:ListBucketMultipartUploads",
+                "s3:CreateBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::royon-demo*",
+                "arn:aws:s3:::royon-spark*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:ListMultipartUploadParts",
+                "s3:AbortMultipartUpload",
+                "s3:PutObject",
+                "s3:DeleteObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::royon-demo/imdb/*",
+                "arn:aws:s3:::royon-spark/athena_temp/*"
+            ]
+        }
+    ]
+}

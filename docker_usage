@@ -1,0 +1,6 @@
+# update Dockerfile and build the image
+docker build -t graphql-app .
+
+# get shell on the container
+docker run -it -v $PWD/src:/app/src --rm --name gql graphql-app /bin/bash
+docker run -it -p 127.0.0.1:8080:8080 -v $PWD/src:/app/src --rm --name gql graphql-app node /app/src/index.js
