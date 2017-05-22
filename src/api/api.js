@@ -33,7 +33,24 @@ class API {
         return new Promise((resolve, reject) => {
             this.client.StartQueryExecution(obj, (err, result) => {
                 if (err) return reject(err)
-                
+                return resolve(result.QueryExecutionId)
+            })
+        })
+    }
+
+    results(query_id, max, page) {
+        let max_num_results = max ? max : 100
+        let page_token = page ? page : undefined
+        let self = this
+        return Promise((resolve, reject) => {
+            let params = {
+                QueryExecutionId: query_id,
+                MaxResults: max_num_results,
+                NextToken: page_token
+            }
+            self.client.GetQueryResults(params, (err, data) => {
+                if (err) return reject(err)
+                return resolve(data)
             })
         })
     }
