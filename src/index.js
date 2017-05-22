@@ -30,19 +30,22 @@ new JDBC({
 */
 
 // **** USE ATHENA API ****
-
-
 let client = new API({
     Region: 'us-east-1',
     OutputLocation: 's3://royon-spark/athena_temp/',
-    EncryptionConfiguration: {
-        EncryptionOption: SSE_S3 | SSE_KMS | CSE_KMS, /* required */
+    /*EncryptionConfiguration: {
+        EncryptionOption: 'SSE_S3', // | 'SSE_KMS' | 'CSE_KMS', // required 
         KmsKey: 'STRING_VALUE'
-    },
+    },*/
     Database: 'default'
 })
-let params = { QueryString: 'STRING_VALUE', /* required */ }
-client.query()
+
+server.use('/graphql', bodyParser.json(), graphqlExpress({ schema: SCHEMA, context: {client} }))
+server.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }))
+server.use('/health', healthCheckHandler)
+
+server.listen(8080)
+
 /* Only needed when running the ECS task behind an Application Load Balancer */
 function healthCheckHandler(req, res) {
   res.status(200).end()

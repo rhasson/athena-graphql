@@ -5,7 +5,7 @@ class API {
         this.region = ('Region' in params) ? params.Region : 'us-east-1'
         this.database = ('Database' in params) ? params.Database : 'default'
         this.output_location = ('OutputLocation' in params) ? params.OutputLocation : ''
-        this.encryption = ('EncryptionConfiguration' in params) ? params.EncryptionConfiguration : {}
+        this.encryption = ('EncryptionConfiguration' in params) ? params.EncryptionConfiguration : undefined
         
         this.client = new AWS.Athena({
             apiVersion: '2017-05-18',
@@ -16,22 +16,23 @@ class API {
 
     query(params) {
         let sql = undefined
-        if (params instanceof String) { sql = params; params = {} }
+        if (typeof(params) === 'string') { sql = params; params = {} }
         let default_params = {
             QueryString: sql, /* required */
             ResultConfiguration: { /* required */
-                OutputLocation: this.output_location, /* required */
-                EncryptionConfiguration: this.encryption
+                OutputLocation: this.output_location /* required */
             },
             QueryExecutionContext: {
                 Database: this.database
             }
         }
 
+        if (this.encryption) default_params.ResultConfiguration.EncryptionConfiguration = this.encryption
+
         let self = this
-        let obj = Object.assign(default_params, params)
+        let obj = Object.assign(params, default_params)
         return new Promise((resolve, reject) => {
-            this.client.StartQueryExecution(obj, (err, result) => {
+            this.client.startQueryExecution(obj, (err, result) => {
                 if (err) return reject(err)
                 return resolve(result.QueryExecutionId)
             })
@@ -48,10 +49,12 @@ class API {
                 MaxResults: max_num_results,
                 NextToken: page_token
             }
-            self.client.GetQueryResults(params, (err, data) => {
+            self.client.getQueryResults(params, (err, data) => {
                 if (err) return reject(err)
                 return resolve(data)
             })
         })
     }
 }
+
+module.exports = API
