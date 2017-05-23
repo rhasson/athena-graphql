@@ -2,6 +2,7 @@ let Express = require('express')
 let bodyParser = require('body-parser')
 let { graphqlExpress, graphiqlExpress } = require('graphql-server-express')
 let server = Express()
+let API = require('./api/api')
 
 /* load the GraphQL Schema to be used to querying the dataset */
 let SCHEMA = require('./schema/movies.js')

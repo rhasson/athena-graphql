@@ -55,8 +55,8 @@ let QueryRoot = new GraphQLObjectType({
 				limit: { type: GraphQLInt }
 			},
 			resolve: (parent, args, context) => {
-				let jdbc = context.jdbc
-				return jdbc.isConnected() ? jdbc.query(`select * from default.movies limit ${args.limit};`) : new Error('No JDBC connection available')
+				let client = context.client
+				return client.query(`select * from default.movies limit ${args.limit};`)
 			}
 		},
 		popularMovies: {
@@ -66,9 +66,9 @@ let QueryRoot = new GraphQLObjectType({
 				over: { type: GraphQLFloat }
 			},
 			resolve: (parent, args, context) => {
-				let jdbc = context.jdbc
+				let client = context.client
 				args.over = ('over' in args && args.over > 0) ? args.over : 7.0
-				return jdbc.isConnected() ? jdbc.query(`select * from default.movies where imdb_score >= ${parseFloat(args.over)} limit ${args.limit};`) : new Error('No JDBC connection available')
+				return client.query(`select * from default.movies where imdb_score >= ${parseFloat(args.over)} limit ${args.limit};`)
 			}
 		},
 		moviesByGenres: {
@@ -78,9 +78,9 @@ let QueryRoot = new GraphQLObjectType({
 				genres: { type: GraphQLString }
 			},
 			resolve: (parent, args, context) => {
-				let jdbc = context.jdbc
+				let client = context.client
 				args.genres = ('genres' in args && args.genres !== '') ? args.genres : 'Action'
-				return jdbc.isConnected() ? jdbc.query(`select * from default.movies where genres like '%${args.genres}%' limit ${args.limit};`) : new Error('No JDBC connection available')
+				return client.query(`select * from default.movies where genres like '%${args.genres}%' limit ${args.limit};`)
 			}
 		}
 	}

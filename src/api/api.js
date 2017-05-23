@@ -1,12 +1,22 @@
 let AWS = require('aws-sdk')
+let Queue = require('async/queue')
+let _ = require('lodash')
 
 class API {
     constructor(params) {
+        let creds = new AWS.SharedIniFileCredentials({filename:'/app/src/api/credentials', profile: 'royon'});
+        AWS.config.credentials = creds;
         this.region = ('Region' in params) ? params.Region : 'us-east-1'
         this.database = ('Database' in params) ? params.Database : 'default'
         this.output_location = ('OutputLocation' in params) ? params.OutputLocation : ''
         this.encryption = ('EncryptionConfiguration' in params) ? params.EncryptionConfiguration : undefined
         
+        this.q = Queue((id, cb) => {
+            this.startPolling(id)
+            .then((data) => { return cb(null, data) })
+            .catch((err) => { console.log('Failed to poll query: ', err); return cb(err) })
+        }, 5);
+
         this.client = new AWS.Athena({
             apiVersion: '2017-05-18',
             region: this.region,
@@ -34,8 +44,27 @@ class API {
         return new Promise((resolve, reject) => {
             this.client.startQueryExecution(obj, (err, result) => {
                 if (err) return reject(err)
-                return resolve(result.QueryExecutionId)
+                self.q.push(result.QueryExecutionId, (err, qid) => {
+                    if (err) return reject(err)
+                    return self.results(qid)
+                        .then((data) => { return resolve(data) })
+                        .catch((err) => { return reject(err) })
+                })
             })
+        })
+    }
+
+    startPolling(id) {
+        let self = this
+        return new Promise((resolve, reject) => {
+            function poll(id) {
+                self.client.getQueryExecution({QueryExecutionId: id}, (err, data) => {
+                    if (err) return reject(err)
+                    if (data.QueryExecution.Status.State === 'SUCCEEDED') return resolve(id)
+                    else { setTimeout(poll, 1000, id) }
+                })
+            }
+            poll(id)
         })
     }
 
@@ -43,7 +72,7 @@ class API {
         let max_num_results = max ? max : 100
         let page_token = page ? page : undefined
         let self = this
-        return Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             let params = {
                 QueryExecutionId: query_id,
                 MaxResults: max_num_results,
@@ -51,7 +80,14 @@ class API {
             }
             self.client.getQueryResults(params, (err, data) => {
                 if (err) return reject(err)
-                return resolve(data)
+                console.log('got data')
+                let header = _.head(data.ResultSet.ResultRows).Data
+                console.log(header)
+                var list = []
+                _.drop(data.ResultSet.ResultRows).forEach((item) => {
+                    list.push(_.zipObject(header, item.Data))
+                })
+                return resolve(list)
             })
         })
     }
