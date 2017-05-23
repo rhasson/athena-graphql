@@ -4,8 +4,7 @@ let _ = require('lodash')
 
 class API {
     constructor(params) {
-        let creds = new AWS.SharedIniFileCredentials({filename:'/app/src/api/credentials', profile: 'royon'});
-        AWS.config.credentials = creds;
+        let POLL_INTERVAL = 1000
         this.region = ('Region' in params) ? params.Region : 'us-east-1'
         this.database = ('Database' in params) ? params.Database : 'default'
         this.output_location = ('OutputLocation' in params) ? params.OutputLocation : ''
@@ -17,6 +16,8 @@ class API {
             .catch((err) => { console.log('Failed to poll query: ', err); return cb(err) })
         }, 5);
 
+        let creds = new AWS.SharedIniFileCredentials({filename:'/app/src/api/credentials', profile: 'royon'});
+        AWS.config.credentials = creds;
         this.client = new AWS.Athena({
             apiVersion: '2017-05-18',
             region: this.region,
@@ -61,7 +62,7 @@ class API {
                 self.client.getQueryExecution({QueryExecutionId: id}, (err, data) => {
                     if (err) return reject(err)
                     if (data.QueryExecution.Status.State === 'SUCCEEDED') return resolve(id)
-                    else { setTimeout(poll, 1000, id) }
+                    else { setTimeout(poll, POLL_INTERVAL, id) }
                 })
             }
             poll(id)
