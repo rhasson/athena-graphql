@@ -4,7 +4,7 @@ let _ = require('lodash')
 
 class API {
     constructor(params) {
-        let POLL_INTERVAL = 1000
+        this.POLL_INTERVAL = 1000
         this.region = ('Region' in params) ? params.Region : 'us-east-1'
         this.database = ('Database' in params) ? params.Database : 'default'
         this.output_location = ('OutputLocation' in params) ? params.OutputLocation : ''
@@ -62,7 +62,7 @@ class API {
                 self.client.getQueryExecution({QueryExecutionId: id}, (err, data) => {
                     if (err) return reject(err)
                     if (data.QueryExecution.Status.State === 'SUCCEEDED') return resolve(id)
-                    else { setTimeout(poll, POLL_INTERVAL, id) }
+                    else { setTimeout(poll, self.POLL_INTERVAL, id) }
                 })
             }
             poll(id)
@@ -81,14 +81,23 @@ class API {
             }
             self.client.getQueryResults(params, (err, data) => {
                 if (err) return reject(err)
-                console.log('got data')
                 let header = _.head(data.ResultSet.ResultRows).Data
-                console.log(header)
                 var list = []
                 _.drop(data.ResultSet.ResultRows).forEach((item) => {
                     list.push(_.zipObject(header, item.Data))
                 })
                 return resolve(list)
+            })
+        })
+    }
+
+    stats(id) {
+        let self = this
+        id = _.trim(id, '"')
+        return new Promise((resolve, reject) => {
+            self.client.getQueryExecution({QueryExecutionId: id}, (err, data) => {
+                if (err) return reject(err)
+                return resolve(data.QueryExecution)  //if (data.QueryExecution.Status.State === 'SUCCEEDED') 
             })
         })
     }

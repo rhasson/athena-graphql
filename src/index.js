@@ -5,7 +5,7 @@ let server = Express()
 let API = require('./api/api')
 
 /* load the GraphQL Schema to be used to querying the dataset */
-let SCHEMA = require('./schema/movies.js')
+let SCHEMA = require('./schema/athena_stats.js')
 
 // **** USE JDBC DRIVER  ****
 /*
