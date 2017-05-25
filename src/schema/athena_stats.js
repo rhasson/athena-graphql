@@ -139,6 +139,15 @@ let AthenaCloudTrail = new GraphQLObjectType({
 	})
 })
 
+let AthenaMonthlyRollup = new GraphQLObjectType({
+    name: 'AthenaMonthlyRollup',
+    fields: () => ({
+        totalCost: { type: GraphQLString },
+        dataScanned: { type: GraphQLString },
+        totalMinutes: { type: GraphQLString }
+    })
+})
+
 let QueryRoot = new GraphQLObjectType({
 	name: 'RootQuery',
 	fields: {
@@ -154,6 +163,7 @@ let QueryRoot = new GraphQLObjectType({
 			},
 			resolve: (parent, args, context) => {
 				let client = context.client
+                let limit = ('limit' in args && args.limit > 0) ? `LIMIT ${args.limit}` : ''
                 let dateSearch = ''
                 let userSearch = ('user' in args && args.user !== '') ? `and userArn like '%${args.user}'` : ''
                 if ('gtMonth' in args && (args.gtMonth > 0 && args.gtMonth < 13)) { dateSearch = `and month(ts) > ${args.gtMonth}` }
@@ -182,7 +192,7 @@ let QueryRoot = new GraphQLObjectType({
                         and eventname like 'StartQueryExecution' 
                         ${userSearch}
                         ${dateSearch}
-                        LIMIT ${args.limit};`
+                        ${limit};`
                 )
 			}
 		},
@@ -194,6 +204,52 @@ let QueryRoot = new GraphQLObjectType({
             resolve: (parent, args, context) => {
                 let client = context.client
                 return client.stats(args.id)
+            }
+        },
+        monthlyRollup: {
+            type: AthenaMonthlyRollup,
+            args: {
+                month: { type: GraphQLInt },
+                user: { type: GraphQLString }
+            },
+            resolve: (parent, args, context) => {
+                return new Promise((resolve, reject) => {
+                    let client = context.client
+                    let dateSearch = ''
+                    let userSearch = ('user' in args && args.user !== '') ? `and userArn like '%${args.user}'` : ''
+                    if ('month' in args && (args.month > 0 && args.month < 13)) { dateSearch = `and month(ts) = ${args.month}` }
+                    client.query(`WITH logs AS (
+                        SELECT DISTINCT
+                            event.eventTime as eventTime,
+                            event.eventName,
+                            event.eventSource,
+                            from_iso8601_timestamp(event.eventtime) as ts,
+                            event.userIdentity.arn as userArn,
+                            json_extract(event.responseElements, '$.queryexecutionid') as queryExecutionId
+                        FROM cloudtrail_logs
+                        CROSS JOIN UNNEST (Records) AS r (event)
+                        )
+                        SELECT * FROM logs 
+                            where eventsource like 'athena%' 
+                            and eventname like 'StartQueryExecution' 
+                            ${userSearch}
+                            ${dateSearch};`
+                    ).then((data) => {
+                        let ids = _.filter(
+                            _.map(data, (item) => { return _.trim(item.queryExecutionId, '"') }),
+                            (item) => { return item != '' })
+                            client.batchStats(ids)
+                            .then((data) => {
+                                let bytes = _.sumBy(data, 'Statistics.DataScannedInBytes')
+                                let milis = _.sumBy(data, 'Statistics.EngineExecutionTimeInMillis')
+                                return resolve({ 
+                                    dataScanned: bytesToSize(bytes), 
+                                    totalCost: toCost(toTB(bytes)),
+                                    totalMinutes: toHours(milis)
+                                })
+                            })
+                    }).catch((err) => { return reject(err) })
+                })
             }
         }
 	}
@@ -209,7 +265,7 @@ function bytesToSize(bytes) {
   if (bytes === 0) return 'n/a'
   const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)), 10)
   if (i === 0) return `${bytes} ${sizes[i]})`
-  return `${(bytes / (1024 ** i)).toFixed(1)} ${sizes[i]}`
+  return `${(bytes / (1024 ** i)).toFixed(2)} ${sizes[i]}`
 }
 
 function toTB(bytes) {
@@ -221,4 +277,11 @@ function toCost(tb) {
     const dollarPerTb = 5.00
     let b = tb * dollarPerTb
     return `$ ${b > 1 ? b.toFixed(2) : b.toFixed(8)}`
+}
+
+function toHours(ms) {
+    ms = 1000*Math.round(ms/1000); // round to nearest second
+    var d = new Date(ms);
+    //return `${d.getUTCHours()}:${d.getUTCMinutes()}`
+    return d.getUTCMinutes()
 }
