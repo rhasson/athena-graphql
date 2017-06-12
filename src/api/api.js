@@ -20,6 +20,7 @@ class API {
         let creds = new AWS.SharedIniFileCredentials({filename:'/app/src/api/credentials', profile: 'royon'});
         AWS.config.credentials = creds;
         this.client = new AWS.Athena({
+            correctClockSkew: true,
             apiVersion: '2017-05-18',
             region: this.region,
             convertResponseTypes: false,
