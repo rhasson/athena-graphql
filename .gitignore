@@ -1,2 +1,3 @@
 *.sql
 src/api/credentials
+.DS_Store
