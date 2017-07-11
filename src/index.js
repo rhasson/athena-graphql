@@ -3,6 +3,20 @@ let bodyParser = require('body-parser')
 let { graphqlExpress, graphiqlExpress } = require('graphql-server-express')
 let server = Express()
 let API = require('./api/api')
+let cors = require('cors')
+
+const whitelist = [
+    // Allow domains here
+    'http://localhost:8080',
+    'http://localhost:8888'
+]
+const corsOptions = {
+    origin(origin, callback){
+        const originIsWhitelisted = whitelist.indexOf(origin) !== -1;
+        callback(null, originIsWhitelisted);
+    },
+    credentials: true
+}
 
 /* load the GraphQL Schema to be used to querying the dataset */
 let SCHEMA = require('./schema/athena_stats.js')
@@ -41,11 +55,12 @@ let client = new API({
     Database: 'default'
 })
 
+server.use(cors(corsOptions))
 server.use('/graphql', bodyParser.json(), graphqlExpress({ schema: SCHEMA, context: {client} }))
 server.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }))
 server.use('/health', healthCheckHandler)
 
-server.listen(8080)
+server.listen(8888)
 
 /* Only needed when running the ECS task behind an Application Load Balancer */
 function healthCheckHandler(req, res) {

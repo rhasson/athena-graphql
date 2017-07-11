@@ -184,7 +184,7 @@ let QueryRoot = new GraphQLObjectType({
                         event.userIdentity.principalId as userPrincipalId,
                         event.userIdentity.accountId as userAccountId,
                         json_extract(event.responseElements, '$.queryexecutionid') as queryExecutionId
-                    FROM cloudtrail_logs
+                    FROM cloudtrail_gql
                     CROSS JOIN UNNEST (Records) AS r (event)
                     )
                     SELECT * FROM logs 
@@ -217,23 +217,23 @@ let QueryRoot = new GraphQLObjectType({
                     let client = context.client
                     let dateSearch = ''
                     let userSearch = ('user' in args && args.user !== '') ? `and userArn like '%${args.user}'` : ''
-                    if ('month' in args && (args.month > 0 && args.month < 13)) { dateSearch = `and month(ts) = ${args.month}` }
+                    if ('month' in args && (args.month > 0 && args.month < 13)) { dateSearch = `month = '${('0'+args.month).slice(-2)}'` }
                     client.query(`WITH logs AS (
-                        SELECT DISTINCT
+                        SELECT
                             event.eventTime as eventTime,
                             event.eventName,
                             event.eventSource,
                             from_iso8601_timestamp(event.eventtime) as ts,
                             event.userIdentity.arn as userArn,
                             json_extract(event.responseElements, '$.queryexecutionid') as queryExecutionId
-                        FROM cloudtrail_logs
+                        FROM cloudtrail_gql
                         CROSS JOIN UNNEST (Records) AS r (event)
+                        WHERE ${dateSearch}
                         )
                         SELECT * FROM logs 
                             where eventsource like 'athena%' 
                             and eventname like 'StartQueryExecution' 
-                            ${userSearch}
-                            ${dateSearch};`
+                            ${userSearch};`
                     ).then((data) => {
                         let ids = _.filter(
                             _.map(data, (item) => { return _.trim(item.queryExecutionId, '"') }),
@@ -242,10 +242,10 @@ let QueryRoot = new GraphQLObjectType({
                             .then((data) => {
                                 let bytes = _.sumBy(data, 'Statistics.DataScannedInBytes')
                                 let milis = _.sumBy(data, 'Statistics.EngineExecutionTimeInMillis')
-                                return resolve({ 
+                                return resolve({
                                     dataScanned: bytesToSize(bytes), 
                                     totalCost: toCost(toTB(bytes)),
-                                    totalMinutes: toHours(milis)
+                                    totalMinutes: toMinutes(milis)
                                 })
                             })
                     }).catch((err) => { return reject(err) })
@@ -279,9 +279,8 @@ function toCost(tb) {
     return `$ ${b > 1 ? b.toFixed(2) : b.toFixed(8)}`
 }
 
-function toHours(ms) {
+function toMinutes(ms) {
     ms = 1000*Math.round(ms/1000); // round to nearest second
     var d = new Date(ms);
-    //return `${d.getUTCHours()}:${d.getUTCMinutes()}`
     return d.getUTCMinutes()
 }
