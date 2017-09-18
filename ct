@@ -1,0 +1,124 @@
+{
+    "Table": {
+        "UpdateTime": 1501094838.0, 
+        "PartitionKeys": [
+            {
+                "Type": "string", 
+                "Name": "date"
+            }
+        ], 
+        "StorageDescriptor": {
+            "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat", 
+            "SortColumns": [], 
+            "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat", 
+            "SerdeInfo": {
+                "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe", 
+                "Parameters": {
+                    "serialization.format": "1"
+                }
+            }, 
+            "BucketColumns": [], 
+            "Parameters": {
+                "compressionType": "none", 
+                "classification": "parquet", 
+                "recordCount": "376651", 
+                "typeOfData": "file", 
+                "objectCount": "36", 
+                "averageRecordSize": "13", 
+                "sizeKey": "2421328"
+            }, 
+            "Location": "s3://royon-demo/glue_output_ct/", 
+            "NumberOfBuckets": -1, 
+            "StoredAsSubDirectories": false, 
+            "Columns": [
+                {
+                    "Type": "bigint", 
+                    "Name": "ts"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "eventversion"
+                }, 
+                {
+                    "Type": "struct<type:string,principalId:string,arn:string,accountId:string,invokedBy:string,accessKeyId:string,userName:string,sessionContext:struct<attributes:struct<mfaAuthenticated:string,creationDate:string>,sessionIssuer:struct<type:string,principalId:string,arn:string,accountId:string,userName:string>>>", 
+                    "Name": "useridentity"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "eventtime"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "eventsource"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "eventname"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "awsregion"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "sourceipaddress"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "useragent"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "errorcode"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "errormessage"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "requestid"
+                }, 
+                {
+                    "Type": "array<struct<arn:string,accountId:string,type:string>>", 
+                    "Name": "resources"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "eventtype"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "apiversion"
+                }, 
+                {
+                    "Type": "boolean", 
+                    "Name": "readonly"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "recipientaccountid"
+                }, 
+                {
+                    "Type": "string", 
+                    "Name": "sharedeventid"
+                }
+            ], 
+            "Compressed": false
+        }, 
+        "Parameters": {
+            "compressionType": "none", 
+            "classification": "parquet", 
+            "recordCount": "376651", 
+            "typeOfData": "file", 
+            "objectCount": "36", 
+            "averageRecordSize": "13", 
+            "sizeKey": "2421328"
+        }, 
+        "LastAccessTime": 1497024784.0, 
+        "Owner": "owner", 
+        "Name": "ct_testglue_output_ct_96130b90", 
+        "TableType": "EXTERNAL_TABLE", 
+        "Retention": 0
+    }
+}

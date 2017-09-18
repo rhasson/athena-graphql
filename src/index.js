@@ -19,7 +19,7 @@ const corsOptions = {
 }
 
 /* load the GraphQL Schema to be used to querying the dataset */
-let SCHEMA = require('./schema/athena_stats.js')
+let SCHEMA = require('./schema/athena_dashboard.js')
 
 // **** USE JDBC DRIVER  ****
 /*

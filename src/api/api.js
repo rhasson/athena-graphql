@@ -2,6 +2,9 @@ let AWS = require('aws-sdk')
 let Queue = require('async/queue')
 let _ = require('lodash')
 
+const PROFILE_NAME = 'roy'
+const CRED_PATH = '/app/src/api/credentials'
+
 class API {
     constructor(params) {
         this.RESULT_SIZE = 1000
@@ -17,7 +20,7 @@ class API {
             .catch((err) => { console.log('Failed to poll query: ', err); return cb(err) })
         }, 5);
 
-        let creds = new AWS.SharedIniFileCredentials({filename:'/app/src/api/credentials', profile: 'royon'});
+        let creds = new AWS.SharedIniFileCredentials({filename: CRED_PATH, profile: PROFILE_NAME});
         AWS.config.credentials = creds;
         this.client = new AWS.Athena({
             correctClockSkew: true,
@@ -30,6 +33,7 @@ class API {
     query(params) {
         let sql = undefined
         if (typeof(params) === 'string') { sql = params; params = {} }
+        console.log(sql)
         let default_params = {
             QueryString: sql,
             ResultConfiguration: { OutputLocation: this.output_location },
